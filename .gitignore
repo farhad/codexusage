@@ -1,0 +1,6 @@
+# Build output
+CodexUsage.app/
+.build/
+
+# macOS
+.DS_Store
