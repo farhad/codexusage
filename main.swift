@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var timer: Timer?
     private var wakeObserver: Any?
     private let fetchQueue = DispatchQueue(label: "com.farhad.codexusage.fetch", qos: .utility)
-    private static let refreshInterval: TimeInterval = 300
+    private static let refreshInterval: TimeInterval = 600
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
