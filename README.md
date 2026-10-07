@@ -7,8 +7,9 @@ codex 7dW 24%  ⏳ 3d5h
 ```
 
 - **Percentage color**: green < 50%, orange < 80%, red ≥ 80%.
-- **Dropdown menu**: plan name, HTTP status, progress bars for both quota windows,
-  reset ETAs, plus *Refresh Now* (⌘R), *Launch at Login*, and *Quit*.
+- **Dropdown menu**: just *Quit* — details live in the button's hover tooltip.
+- **Login item**: registers itself automatically at launch (removable in
+  System Settings → General → Login Items).
 - **Refresh cadence**: every 10 minutes, on wake from sleep, and when the menu opens.
 
 ## Data source

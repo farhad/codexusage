@@ -46,6 +46,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.refresh() }
+
+        registerLoginItem()
+    }
+
+    private func registerLoginItem() {
+        guard #available(macOS 13.0, *) else { return }
+        let status = SMAppService.mainApp.status
+        log.info("login item status: \(status.rawValue, privacy: .public)")
+        guard status != .enabled else { return }
+        do {
+            try SMAppService.mainApp.register()
+            log.info("registered as login item")
+        } catch {
+            log.error("login item registration failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Refresh
@@ -217,53 +232,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func rebuildMenu() {
         menu.removeAllItems()
-
-        let header: String
-        if let usage {
-            header = "Codex Usage — plan \(usage.plan) · HTTP \(usage.statusCode)\(usage.ok ? "" : " ⚠️")"
-        } else if errorMessage != nil {
-            header = "Codex Usage — update failed"
-        } else {
-            header = "Codex Usage — updating…"
-        }
-        addInfo(header)
-        menu.addItem(.separator())
-
-        if let usage {
-            addInfo(
-                "7d window  \(bar(usage.primaryPct)) \(usage.primaryPct)%  resets in \(usage.primaryReset)",
-                monospaced: true
-            )
-            addInfo(
-                "window B   \(bar(usage.secondaryPct)) \(usage.secondaryPct)%  resets in \(usage.secondaryReset)",
-                monospaced: true
-            )
-            menu.addItem(.separator())
-        } else if let errorMessage {
-            let message = errorMessage.count > 90 ? String(errorMessage.prefix(90)) + "…" : errorMessage
-            addInfo(message)
-            menu.addItem(.separator())
-        }
-
-        _ = addAction("Refresh Now", action: #selector(refreshNow), key: "r")
-        if #available(macOS 13.0, *) {
-            let login = addAction("Launch at Login", action: #selector(toggleLogin), key: "")
-            login.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        }
-        menu.addItem(.separator())
         _ = addAction("Quit CodexUsage", action: #selector(quit), key: "q")
-    }
-
-    private func addInfo(_ title: String, monospaced: Bool = false) {
-        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        item.isEnabled = false
-        if monospaced {
-            item.attributedTitle = NSAttributedString(
-                string: title,
-                attributes: [.font: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)]
-            )
-        }
-        menu.addItem(item)
     }
 
     private func addAction(_ title: String, action: Selector, key: String) -> NSMenuItem {
@@ -274,35 +243,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return item
     }
 
-    private func bar(_ pct: Int) -> String {
-        let width = 16
-        let filled = max(0, min(width, pct * width / 100))
-        return "[" + String(repeating: "#", count: filled) + String(repeating: "-", count: width - filled) + "]"
-    }
-
     func menuWillOpen(_ menu: NSMenu) {
         if let last = lastFetch, Date().timeIntervalSince(last) < 45 { return }
         refresh()
     }
 
     // MARK: - Actions
-
-    @objc func refreshNow() { refresh() }
-
-    @objc func toggleLogin() {
-        guard #available(macOS 13.0, *) else { return }
-        do {
-            switch SMAppService.mainApp.status {
-            case .enabled:
-                try SMAppService.mainApp.unregister()
-            default:
-                try SMAppService.mainApp.register()
-            }
-        } catch {
-            errorMessage = "Login item error: \(error.localizedDescription)"
-        }
-        rebuildMenu()
-    }
 
     @objc func quit() { NSApp.terminate(nil) }
 }
